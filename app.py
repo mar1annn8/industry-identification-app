@@ -17,7 +17,7 @@ This Streamlit app analyzes a company's website or manual description to identif
 1.  **Input:** A user provides a website URL or manually enters a description of products/services.
 2.  **API Key:** The user must enter a valid Gemini API key into the input field.
 3.  **Scraping:** If a URL is provided, the app uses `requests` and `BeautifulSoup` to scrape the visible text content from the page.
-4.  **Analysis:** The scraped text (or manual input) is sent to the Gemini API (`gemini-2.5-pro-preview-09-2025`).
+4.  **Analysis:** The scraped text (or manual input) is sent to the Gemini API (`gemini-2.5-pro`).
 5.  **AI Processing:** A detailed system prompt instructs the model to:
     * Identify products/services.
     * Match them to the provided industry database.
@@ -80,7 +80,7 @@ INDUSTRY_DATABASE = """
 - Logistics & Transportation: Movement of goods and people (Shipping, trucking, warehousing, airlines, railways, public transportation)
 - Marketing: Promoting products, services, or ideas (Market research, advertising, branding, public relations, content marketing, digital marketing, sales)
 - Media & Communications: Information dissemination, journalism, public relations (Journalism, publishing, broadcasting, telecommunications, public relations, content creation)
-- Medical Cannabis: Cannabis for medical use (Dispensaries, cultivation, medical marijuana products)
+- Medical Cannabis: Cannabis for medical use (Disparies, cultivation, medical marijuana products)
 - News: Current events and information (Newspapers, magazines, television news, online news portals, radio)
 - Not For Profit: Charitable organizations and social causes (Charities, foundations, NGOs, social advocacy groups)
 - People & Society: Social issues, community, and culture (Social services, community organizations, advocacy groups, cultural institutions)
@@ -164,8 +164,8 @@ async def call_gemini_api(user_text, api_key):
         st.error("API Key is not set. Please add it to the Streamlit Secrets.")
         return None
 
-    # --- MODEL UPDATED TO 2.5 PRO ---
-    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-09-2025:generateContent?key={api_key}"
+    # --- MODEL UPDATED TO gemini-2.5-pro ---
+    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={api_key}"
     
     user_query = f"Please analyze the following company information: {user_text}"
 
@@ -208,7 +208,11 @@ async def call_gemini_api(user_text, api_key):
                 delay *= 2  # Exponential backoff
             else:
                 st.error(f"HTTP Error: {e}")
-                st.json(e.response.json()) # Show error details
+                # Log the error response from the API
+                try:
+                    st.json(e.response.json()) 
+                except json.JSONDecodeError:
+                    st.text(e.response.text) # Fallback if error response isn't JSON
                 return None
         except requests.exceptions.RequestException as e:
             st.error(f"Request Error: {e}. Retrying...")
