@@ -53,54 +53,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# --- Setup Guide Content ---
-# This text is from the README.md file to be displayed in the app.
-SETUP_GUIDE_MARKDOWN = """
-# Industry Analyzer Streamlit App
-
-This Streamlit app analyzes a company's website or manual description to identify its core products/services and classifies them into Primary, Secondary, or Tertiary industry sectors based on a custom database.
-
-## How It Works
-
-1.  **Input:** A user provides a website URL or manually enters a description of products/services.
-2.  **API Key:** The user must enter a valid Gemini API key into the input field.
-3.  **Scraping:** If a URL is provided, the app uses `requests` and `BeautifulSoup` to scrape the visible text content from the page.
-4.  **Analysis:** The scraped text (or manual input) is sent to the Gemini API (`gemini-2.5-pro`).
-5.  **AI Processing:** A detailed system prompt instructs the model to:
-    * Identify products/services.
-    * Match them to the provided industry database.
-    * Classify each as Primary, Secondary, or Tertiary.
-    * Return a structured JSON response.
-6.  **Output:** The app parses the JSON and displays the results in a table and a summary bar chart.
-
-## Setup and Deployment on Streamlit Community Cloud
-
-### 1. Create a GitHub Repository
-
-1.  Create a new public repository on GitHub (e.g., `industry-analyzer`).
-2.  Add the following three files to the repository:
-    * `app.py` (the main Streamlit app code)
-    * `requirements.txt` (the list of dependencies)
-    * `README.md` (this file)
-
-### 2. Get a Gemini API Key
-
-1.  Go to the [Google AI Studio](https://aistudio.google.com/).
-2.  Create a new API key.
-3.  Copy this key. It will be pasted into the app's UI after deployment.
-
-### 3. Deploy on Streamlit Community Cloud
-
-1.  Sign up for or log in to [Streamlit Community Cloud](https://share.streamlit.io/).
-2.  Click the "**New app**" button.
-3.  **Deploy from an existing repo:**
-    * **Repository:** Select the GitHub repository created in Step 1.
-    * **Branch:** Select the main branch (e.g., `main` or `master`).
-    * **Main file path:** Enter `app.py`.
-4.  Click the "**Deploy!**" button.
-5.  Once the app is deployed, it will ask for the Gemini API key directly in the user interface. Paste the key obtained in Step 2 into this field to use the app.
-"""
-
 # --- Database from Prompt ---
 INDUSTRY_DATABASE = """
 - Adult Products: Products related to adult entertainment and intimacy (Adult toys, lingerie, sexual wellness products)
@@ -300,15 +252,43 @@ with st.sidebar:
     manual_button = st.button("Analyze Manual Input", type="primary")
 
 # --- Main Page Display ---
+st.markdown("<p style='font-size: 1px;'>&nbsp;</p>", unsafe_allow_html=True) # Spacer
 st.markdown("<h1 style='background-color: #FFF9C4; padding: 10px; border-radius: 10px;'>Industry Sector Analyzer</h1>", unsafe_allow_html=True)
 st.markdown("""
-This tool analyzes a company's website or a manual description to identify its core products/services.
-It then classifies them into **Primary**, **Secondary**, or **Tertiary** industry sectors based on economic definitions.
+This tool helps brands accurately identify their industry category by analyzing website content or manual input. 
+It uses Gemini’s AI to compare messaging against a trusted reference database, ensuring precise classification for outreach, compliance, and positioning.
 """)
 
-# --- Added Collapsible Setup Guide ---
+# --- Updated Instructions Section ---
 with st.expander("Instructions"):
-    st.markdown(SETUP_GUIDE_MARKDOWN)
+
+    with st.expander("How to Use This Tool"):
+        st.markdown("""
+        This tool analyzes a company's website or a manual description to identify its core products/services. It classifies them into Primary, Secondary, or Tertiary industry sectors.
+
+        1.  **Provide API Key:** Enter a valid Google Gemini API key in the sidebar.
+        2.  **Choose Input Method:**
+            * **Method 1 (Scan Website):** Enter a full website URL (e.g., `https://www.company.com`) and click "Scan and Analyze Website".
+            * **Method 2 (Manual Input):** Manually type or paste a description of the company's products/services and click "Analyze Manual Input".
+        3.  **Review Results:** The tool will display a table of the identified services, their industry category, and their economic sector. A bar chart will summarize the findings.
+        """)
+
+    with st.expander("How to Start"):
+        st.markdown("""
+        1.  **Get Your API Key:** Follow the instructions in the "How to Get a Google AI API Key" section below.
+        2.  **Enter Key:** Paste your API key into the "Enter the Gemini API Key" field in the sidebar. A green "API Key Ready" tag will appear.
+        3.  **Provide Input:** Use either "Input Method 1" (website) or "Input Method 2" (manual text) in the sidebar.
+        4.  **Analyze:** Click the "Scan and Analyze Website" or "Analyze Manual Input" button.
+        """)
+
+    with st.expander("How to Get a Google AI API Key"):
+        st.markdown("""
+        1.  **Visit Google AI Studio:** Go to [aistudio.google.com](https://aistudio.google.com).
+        2.  **Sign In:** Log in with a Google account.
+        3.  **Get API Key:** Click on **"Get API key"** on the left-hand menu.
+        4.  **Create API Key:** Click **"Create API key in new project"**.
+        5.  **Copy and Use:** Copy the new key and paste it into the "Enter the Gemini API Key" field in this app's sidebar.
+        """)
 
 # Check for API key after setting up the main page
 api_key_ready = bool(GEMINI_API_KEY)
