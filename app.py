@@ -5,6 +5,54 @@ import json
 import time
 import asyncio # Make sure asyncio is imported
 
+# --- Page Configuration ---
+st.set_page_config(
+    page_title="Industry Sector Analyzer",
+    layout="wide"
+)
+
+# --- Custom CSS ---
+st.markdown("""
+    <style>
+        /* Reduce top padding */
+        .block-container {
+            padding-top: 1rem;
+        }
+        [data-testid="stSidebar"] > div:first-child {
+            padding-top: 1rem;
+        }
+
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        
+        .status-tag {
+            display: inline-block;
+            padding: 0.3em 0.8em;
+            margin: 0.2em;
+            font-size: 0.9em;
+            font-weight: bold;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            border-radius: 0.25rem;
+            color: white;
+        }
+        .tag-red {
+            background-color: #D32F2F; /* Red */
+        }
+        .tag-green {
+            background-color: #388E3C; /* Green */
+        }
+        
+        /* CSS for the green button when ready */
+        div.stButton > button {
+            width: 100%;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
 # --- Setup Guide Content ---
 # This text is from the README.md file to be displayed in the app.
 SETUP_GUIDE_MARKDOWN = """
@@ -164,7 +212,7 @@ async def call_gemini_api(user_text, api_key):
         st.error("API Key is not set. Please add it to the Streamlit Secrets.")
         return None
 
-    # --- MODEL UPDATED TO gemini-2.5-pro ---
+    # --- MODEL UPDATED TO gemini-2.5-pro AND URL TYPO FIXED ---
     api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={api_key}"
     
     user_query = f"Please analyze the following company information: {user_text}"
@@ -191,9 +239,10 @@ async def call_gemini_api(user_text, api_key):
             
             result = response.json()
             
-            candidate = result.get("candidates", [])[0]
+            # Use .get() for safer dictionary access
+            candidate = result.get("candidates", [{}])[0]
             if candidate:
-                text_content = candidate.get("content", {}).get("parts", [])[0].get("text", "")
+                text_content = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
                 if text_content:
                     # The response is expected to be a JSON string
                     return json.loads(text_content)
@@ -235,35 +284,45 @@ async def call_gemini_api(user_text, api_key):
 
 # --- Streamlit App UI ---
 
-st.set_page_config(layout="wide", page_title="Industry Sector Analyzer")
-
-st.title("Industry Sector Analyzer")
-st.markdown("Enter a website URL to automatically scan its content, or manually describe the company's products/services. The app will categorize them into Primary, Secondary, or Tertiary industries.")
-
-# --- Added Collapsible Setup Guide ---
-with st.expander("Show Setup Guide and Instructions"):
-    st.markdown(SETUP_GUIDE_MARKDOWN)
-
-# API Key Input
-# This section is modified to remove Streamlit Secrets and use a direct text input.
-GEMINI_API_KEY = st.text_input("Enter the Gemini API Key:", type="password")
-
-if not GEMINI_API_KEY:
-    st.warning("Please enter a Gemini API Key to proceed.")
-    st.stop()
-
-
-col1, col2 = st.columns([1, 1])
-
-with col1:
+# --- Sidebar for Inputs ---
+with st.sidebar:
+    st.markdown("<h2 style='font-weight: bold;'>Inputs</h2>", unsafe_allow_html=True)
+    
+    # API Key Input
+    GEMINI_API_KEY = st.text_input("Enter the Gemini API Key:", type="password")
+    
     st.subheader("Input Method 1: Scan Website")
     website_url = st.text_input("Enter website URL (e.g., https://www.apple.com):")
-    scan_button = st.button("Scan and Analyze Website")
+    scan_button = st.button("Scan and Analyze Website", type="primary")
 
-with col2:
     st.subheader("Input Method 2: Manual Input")
     manual_services = st.text_area("Core products/services (one per line):", height=120)
-    manual_button = st.button("Analyze Manual Input")
+    manual_button = st.button("Analyze Manual Input", type="primary")
+
+# --- Main Page Display ---
+st.markdown("<h1 style='background-color: #FFF9C4; padding: 10px; border-radius: 10px;'>Industry Sector Analyzer</h1>", unsafe_allow_html=True)
+st.markdown("""
+This tool analyzes a company's website or a manual description to identify its core products/services.
+It then classifies them into **Primary**, **Secondary**, or **Tertiary** industry sectors based on economic definitions.
+""")
+
+# --- Added Collapsible Setup Guide ---
+with st.expander("Instructions"):
+    st.markdown(SETUP_GUIDE_MARKDOWN)
+
+# Check for API key after setting up the main page
+api_key_ready = bool(GEMINI_API_KEY)
+if not api_key_ready:
+    st.warning("Please enter a Gemini API Key in the sidebar to proceed.")
+    st.stop()
+else:
+    # Show green "Ready" tag in sidebar if key is present
+    st.sidebar.markdown(
+        '<div style="display: flex; align-items: center; justify-content: center; margin-top: 10px;">'
+        '<span class="status-tag tag-green">API Key Ready</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
 # --- Logic to handle button clicks ---
 
@@ -285,7 +344,7 @@ elif manual_button and manual_services:
 
 if 'analysis_input' in st.session_state and not st.session_state.get('analysis_complete', False):
     st.divider()
-    st.subheader("Analysis Results")
+    st.header("Analysis Results", divider="rainbow")
     
     with st.spinner("Analyzing content and classifying industries..."):
         # Run the async function using asyncio.run()
